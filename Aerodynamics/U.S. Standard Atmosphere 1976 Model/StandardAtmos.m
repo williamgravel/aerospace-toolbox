@@ -5,7 +5,6 @@ function [Results] = StandardAtmos(alt,opts)
 %   of air from 0 km to 1000 km altitude.
 %
 %   Notes:      - Computed thermal conductivity values do not match COESA 1976 report tables
-%   Debug:      - Bugs needed to fix
 %
 %   Inputs:     alt                     -   geometric altitude
 %               opts.UnitSystem         -   output unit system
@@ -18,7 +17,7 @@ function [Results] = StandardAtmos(alt,opts)
 %
 %   Author:     William Gravel
 %   Created:    03/02/2021
-%   Edited:     05/20/2021
+%   Edited:     05/22/2021
 %   Purpose:    COESA's U.S. Standard Atmosphere 1976 Model
 
 %% Argument Validation
@@ -26,14 +25,14 @@ arguments
     alt (:,1) double
     opts.ReferenceFrame (1,1) string {mustBeMember(opts.ReferenceFrame,{'Geometric','Geopotential'})} = 'Geometric'
     opts.HeightUnit (1,1) string {mustBeMember(opts.HeightUnit,{'m','km','ft','mi'})} = 'm'
-    opts.IncludeProps (1,:) string {mustBeMember(opts.IncludeProps,{'Z','Z','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {'Z','Z','T','T_M','P','rho','g','N','c_s','mu','nu','k'}
-    opts.ExcludeProps (1,:) string {mustBeMember(opts.ExcludeProps,{'Z','Z','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {}
-    opts.OutputFormat (1,1) string {mustBeMember(opts.OutputFormat,{'Table','Struct'})} = 'Table'
+    opts.IncludeProps (1,:) string {mustBeMember(opts.IncludeProps,{'Z','H','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {}
+    opts.ExcludeProps (1,:) string {mustBeMember(opts.ExcludeProps,{'Z','H','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {}
+    opts.OutputFormat (1,1) string {mustBeMember(opts.OutputFormat,{'table','struct'})} = 'table'
 end
 
 opts.HeightUnit = char(opts.HeightUnit);
-opts.IncludeProps = char(opts.IncludeProps);
-opts.ExcludeProps = char(opts.ExcludeProps);
+opts.IncludeProps = convertStringsToChars(opts.IncludeProps);
+opts.ExcludeProps = convertStringsToChars(opts.ExcludeProps);
 
 %% Constants, Tables, and Equations
 % Define universal definitions structure
@@ -117,19 +116,24 @@ if any(strcmp(opts.HeightUnit,{'ft','mi'}))
 end
 
 %% Results Output
-if strcmp(opts.OutputFormat,'Table')
-    % Setup table
-    Results = table(Z,H,T,T_M,P,rho,g,N,c_s,mu,nu,k);
-    if any(strcmp(opts.HeightUnit,{'m','km'}))
-        Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'K','K','N/m^2','kg/m^3','m/s^2','m^-3','m/s','kg/(m*s)','m^2/s','W/(m*K)'};
-    elseif any(strcmp(opts.HeightUnit,{'ft','mi'}))
-        Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'degR','degR','lb/ft^2','slug/ft^3','ft/s^2','ft^-3','ft/s','slug/(ft*s)','ft^2/s','lb/(s*degR)'};
-    end
-    
-    Results.Properties.VariableDescriptions = {'Geometric altitude','Geopotential altitude','Kinetic temperature','Molecular-scale temperature','Pressure','Air density','Gravitational acceleration','Number density','Speed of sound','Dynamic viscosity','Kinematic viscosity','Thermal coefficient'};
-elseif strcmp(opts.OutputFormat,'Struct')
+% Setup table
+Results = table(Z,H,T,T_M,P,rho,g,N,c_s,mu,nu,k);
+if any(strcmp(opts.HeightUnit,{'m','km'}))
+    Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'K','K','N/m^2','kg/m^3','m/s^2','m^-3','m/s','kg/(m*s)','m^2/s','W/(m*K)'};
+elseif any(strcmp(opts.HeightUnit,{'ft','mi'}))
+    Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'degR','degR','lb/ft^2','slug/ft^3','ft/s^2','ft^-3','ft/s','slug/(ft*s)','ft^2/s','lb/(s*degR)'};
+end
+Results.Properties.VariableDescriptions = {'Geometric altitude','Geopotential altitude','Kinetic temperature','Molecular-scale temperature','Pressure','Air density','Gravitational acceleration','Number density','Speed of sound','Dynamic viscosity','Kinematic viscosity','Thermal coefficient'};
+
+if ~isempty(opts.IncludeProps)
+    Results = Results(:,opts.IncludeProps);
+elseif ~isempty(opts.ExcludeProps)
+    Results = Results(:,setdiff({'Z','H','T','T_M','P','rho','g','N','c_s','mu','nu','k'},opts.ExcludeProps,'stable'));
+end
+
+if strcmp(opts.OutputFormat,'struct')
     % Setup struct
-    Results = struct('Z',Z,'H',H,'T',T,'T_M',T_M,'P',P,'rho',rho,'g',g,'N',N,'c_s',c_s,'mu',mu,'nu',nu,'k',k);
+    Results = table2struct(Results);
 end
 
 end

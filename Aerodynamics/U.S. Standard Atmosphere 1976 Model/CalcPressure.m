@@ -51,6 +51,8 @@ if any(is_lower)
     M = interp1(MolWeightRatios.Z{:,'Z'},MolWeightRatios.Z{:,'M/M_0'},Z(is_lower))*c.M_0;
     
     rho(is_lower) = P(is_lower).*M./(c.R_star*T(is_lower));
+    
+    N(is_lower) = c.N_A*P./(c.R_star*T);
 end
 
 %% Upper Atmosphere Computations (86 km to 1000 km)
