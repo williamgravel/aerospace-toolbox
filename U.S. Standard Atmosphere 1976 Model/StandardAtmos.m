@@ -6,9 +6,10 @@ function [Results] = StandardAtmos(alt,opts)
 %
 %   Notes:      - Computed thermal conductivity values do not match COESA 1976 report tables
 %
-%   Inputs:     alt                     -   geometric altitude
-%               opts.UnitSystem         -   output unit system
+%   Inputs:     alt                     -   altitude
+%               opts.ReferenceFrame     -   altitude reference type
 %               opts.HeightUnit         -   input height unit
+%               opts.UnitSystem         -   output unit system
 %               opts.IncludeProps       -   output properties whitelist
 %               opts.ExcludeProps       -   output properties blacklist
 %               opts.OutputFormat       -   outputs results format
@@ -25,6 +26,7 @@ arguments
     alt (:,1) double
     opts.ReferenceFrame (1,1) string {mustBeMember(opts.ReferenceFrame,{'Geometric','Geopotential'})} = 'Geometric'
     opts.HeightUnit (1,1) string {mustBeMember(opts.HeightUnit,{'m','km','ft','mi'})} = 'm'
+    opts.UnitSystem (1,1) string {mustBeMember(opts.UnitSystem,{'SI','English'})}
     opts.IncludeProps (1,:) string {mustBeMember(opts.IncludeProps,{'Z','H','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {}
     opts.ExcludeProps (1,:) string {mustBeMember(opts.ExcludeProps,{'Z','H','T','T_M','P','rho','g','N','c_s','mu','nu','k'})} = {}
     opts.OutputFormat (1,1) string {mustBeMember(opts.OutputFormat,{'table','struct'})} = 'table'
@@ -33,6 +35,16 @@ end
 opts.HeightUnit = char(opts.HeightUnit);
 opts.IncludeProps = convertStringsToChars(opts.IncludeProps);
 opts.ExcludeProps = convertStringsToChars(opts.ExcludeProps);
+
+if isfield(opts,'UnitSystem')
+    opts.UnitSystem = char(opts.UnitSystem);
+else
+    if any(strcmp(opts.HeightUnit,{'m','km'}))
+        opts.UnitSystem = 'SI';
+    elseif any(strcmp(opts.HeightUnit,{'ft','mi'}))
+        opts.UnitSystem = 'English';
+    end
+end
 
 %% Constants, Tables, and Equations
 % Define universal definitions structure
@@ -102,7 +114,7 @@ elseif strcmp(opts.HeightUnit,'mi') % [km] -> [mi]
     H = H/3.048e-4/5280;
 end
 
-if any(strcmp(opts.HeightUnit,{'ft','mi'}))
+if strcmp(opts.HeightUnit,'English')
     T = T*f.K_to_degR; % [K] -> [degR]
     T_M = T_M*f.K_to_degR; % [K] -> [degR]
     P = P*f.N_to_lbf/(f.m_to_ft)^2; % [N/m^2] -> [lb/ft^2]
@@ -118,9 +130,9 @@ end
 %% Results Output
 % Setup table
 Results = table(Z,H,T,T_M,P,rho,g,N,c_s,mu,nu,k);
-if any(strcmp(opts.HeightUnit,{'m','km'}))
+if strcmp(opts.UnitSystem,'SI')
     Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'K','K','N/m^2','kg/m^3','m/s^2','m^-3','m/s','kg/(m*s)','m^2/s','W/(m*K)'};
-elseif any(strcmp(opts.HeightUnit,{'ft','mi'}))
+elseif strcmp(opts.UnitSystem,'English')
     Results.Properties.VariableUnits = {opts.HeightUnit,opts.HeightUnit,'degR','degR','lb/ft^2','slug/ft^3','ft/s^2','ft^-3','ft/s','slug/(ft*s)','ft^2/s','lb/(s*degR)'};
 end
 Results.Properties.VariableDescriptions = {'Geometric altitude','Geopotential altitude','Kinetic temperature','Molecular-scale temperature','Pressure','Air density','Gravitational acceleration','Number density','Speed of sound','Dynamic viscosity','Kinematic viscosity','Thermal coefficient'};
