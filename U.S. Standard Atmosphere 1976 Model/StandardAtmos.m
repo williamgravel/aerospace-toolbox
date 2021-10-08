@@ -114,7 +114,7 @@ elseif strcmp(opts.HeightUnit,'mi') % [km] -> [mi]
     H = H/3.048e-4/5280;
 end
 
-if strcmp(opts.HeightUnit,'English')
+if strcmp(opts.UnitSystem,'English')
     T = T*f.K_to_degR; % [K] -> [degR]
     T_M = T_M*f.K_to_degR; % [K] -> [degR]
     P = P*f.N_to_lbf/(f.m_to_ft)^2; % [N/m^2] -> [lb/ft^2]

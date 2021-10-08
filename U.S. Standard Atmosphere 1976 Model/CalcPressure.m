@@ -52,7 +52,7 @@ if any(is_lower)
     
     rho(is_lower) = P(is_lower).*M./(c.R_star*T(is_lower));
     
-    N(is_lower) = c.N_A*P./(c.R_star*T);
+    N(is_lower) = c.N_A*P(is_lower)./(c.R_star*T(is_lower));
 end
 
 %% Upper Atmosphere Computations (86 km to 1000 km)
