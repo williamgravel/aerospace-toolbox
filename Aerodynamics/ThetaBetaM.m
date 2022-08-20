@@ -1,4 +1,4 @@
-function [theta,beta,M] = ThetaBetaM(val,var,opts)
+function [theta,beta,M] = ThetaBetaM(var,val,opts)
 %THETABETAM Solves incomplete oblique shock wave propogation properties.
 %   Completes deflection angle, shock wave angle, and Mach number relationship.
 %
@@ -10,12 +10,12 @@ function [theta,beta,M] = ThetaBetaM(val,var,opts)
 %
 %   Author:     William Gravel - University of Colorado at Boulder
 %   Created:    04/18/2021
-%   Edited:     04/23/2021
+%   Edited:     11/18/2021
 
 % Define input arguments
 arguments (Repeating)
-    val (1,1) double
     var (1,1) string {mustBeMember(var,{'theta','beta','M'})}
+    val (1,1) double
 end
 arguments
     opts.AngleUnits (1,1) string {mustBeMember(opts.AngleUnits,{'deg','rad'})} = 'deg'
